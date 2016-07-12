@@ -166,7 +166,9 @@ class HexKI:
         print(' \n'.join(
             '       '.join(str(a) for a in row) for row in show_board))
 
-        self.eval_time_average = sum(self.eval_times) / len(self.eval_times)
+        if self.eval_times:
+            self.eval_time_average = sum(self.eval_times
+                                         ) / len(self.eval_times)
         return True
 
     def evaluate(self, nodes=None):
@@ -259,10 +261,10 @@ class HexKI:
                     nodes[i][j].change_colour(0)
                     nodes[i][j].pot = 1
 
-        # this ia a cutoff point
-        if a <= b:
+            # this ia a cutoff point
+            if a <= b:
+                return a
             return a
-        return a
 
     def min_value(self, nodes, a, b, depth):
         if (depth == 0):
@@ -278,10 +280,10 @@ class HexKI:
                     nodes[i][j].change_colour(0)
                     nodes[i][j].pot = 1
 
-        # this is a cutoff point
-        if b >= a:
+            # this is a cutoff point
+            if b >= a:
+                return b
             return b
-        return b
 
     # String representation to test logic without GUI dependency
     def __str__(self):
