@@ -262,9 +262,9 @@ class HexKI:
                     nodes[i][j].pot = 1
 
             # this ia a cutoff point
-            if a <= b:
-                return a
-            return a
+                if a <= b:
+                    return a
+        return a
 
     def min_value(self, nodes, a, b, depth):
         if (depth == 0):
@@ -280,10 +280,10 @@ class HexKI:
                     nodes[i][j].change_colour(0)
                     nodes[i][j].pot = 1
 
-            # this is a cutoff point
-            if b >= a:
-                return b
-            return b
+                # this is a cutoff point
+                if b >= a:
+                    return b
+        return b
 
     # String representation to test logic without GUI dependency
     def __str__(self):
