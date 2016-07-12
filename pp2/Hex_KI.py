@@ -108,27 +108,36 @@ class HexKI:
 
         # Nachfolgende ist zum Speichern der besten moves gedacht
         # Wenn man mit besseren moves anfängt, spart man sich angeblich zeit
-
-        # Beim ersten Zug werden nur das mittlere quadrat durchsucht
-        # muss noch angepasst werden mit swap später
-        if self.move_number == 1:
+        if self.n == 3:
             self.moves = {}
-            # noch in list comprehension
-            for i in range(1, self.n - 1):
-                for j in range(1, self.m - 1):
-                    (self.moves.setdefault(1, [])).append((i, j))
-
-            self.move_number += 1
-            print(self.moves)
-
-        # Beim zweiten move werden alle fehlenden moves hinzugefuegt
-        elif self.move_number == 2:
-            for i in range(self.n):
-                for j in range(self.m):
-                    if i not in range(1, self.n - 1) or j not in range(1, self.m - 1):
+            (self.moves.setdefault(1, [])).append((1, 1))
+        elif self.n == 4:
+            self.moves = {}
+            (self.moves.setdefault(1, [])).append((3, 0))
+            (self.moves.setdefault(1, [])).append((2, 1))
+            (self.moves.setdefault(1, [])).append((1, 2))
+            (self.moves.setdefault(1, [])).append((0, 3))
+        else:
+            # Beim ersten Zug werden nur das mittlere quadrat durchsucht
+            # muss noch angepasst werden mit swap später
+            if self.move_number == 1:
+                self.moves = {}
+                # noch in list comprehension
+                for i in range(1, self.n - 1):
+                    for j in range(1, self.m - 1):
                         (self.moves.setdefault(1, [])).append((i, j))
-            self.move_number += 1
-            print(self.moves)
+
+                self.move_number += 1
+                print(self.moves)
+
+            # Beim zweiten move werden alle fehlenden moves hinzugefuegt
+            elif self.move_number == 2:
+                for i in range(self.n):
+                    for j in range(self.m):
+                        if i not in range(1, self.n - 1) or j not in range(1, self.m - 1):
+                            (self.moves.setdefault(1, [])).append((i, j))
+                self.move_number += 1
+                print(self.moves)
 
         # Sortiere Moves nach a wert, so dass er mit dem kleinsten a
         # beginnt (kleines a -> guter move)
