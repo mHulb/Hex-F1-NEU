@@ -9,6 +9,7 @@ AINode:
 Dijkstra:
 """
 
+
 class Node:
     """
     Class to store a node.
@@ -97,13 +98,12 @@ class AINode(Node):
     def __init__(self, i, j, colour=0):
         super().__init__(i, j)
         # default value for empty nodes is 1
-        self.resistance_1 = 1 
+        self.resistance_1 = 1
         self.resistance_2 = 1
         self.colour = colour
 
         # potential for dijkstra
         self.pot = float("inf")
-
 
         # moeglicherweise unnoetig die nochmal extra zu speichern
         # vllt aber auch nuetzlich spaeter
@@ -129,7 +129,7 @@ class AINode(Node):
             self.resistance_1, self.resistance_2 = 1, 1
         elif self.colour == 1:
             self.resistance_1, self.resistance_2 = 0, float("inf")
-        else: # if self.colour == 2
+        else:   # if self.colour == 2
             self.resistance_1, self.resistance_2 = float("inf"), 0
 
 
@@ -213,6 +213,7 @@ class Dijkstra():
                 if v.pot > u.pot + edge.weight(player_num):
                     v.pot = u.pot + edge.weight(player_num)
             heapq.heapify(heap)
+        
         n = len(nodes)
         show = [[n.pot for n in row] for row in nodes]
         tmp = []
@@ -224,6 +225,5 @@ class Dijkstra():
         val = tmp.count(max(tmp))
 
         self.value = min(tmp)
-
-
-
+        
+        # self.value = target.pot

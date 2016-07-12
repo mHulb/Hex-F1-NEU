@@ -97,6 +97,7 @@ class HexKI:
     def calculateMove(self):
         self.eval_number = 0    # zum testen
         self.eval_times = []
+        self.board_scores = {}
         """
         """
         # Kann spaeter geloescht werden, ist nur zum print da
@@ -119,7 +120,6 @@ class HexKI:
                     (self.moves.setdefault(1, [])).append((i, j))
 
             self.move_number += 1
-            print(self.moves)
 
         # Beim zweiten move werden alle fehlenden moves hinzugefuegt
         elif self.move_number == 2:
@@ -128,7 +128,6 @@ class HexKI:
                     if i not in range(1, self.n - 1) or j not in range(1, self.m - 1):
                         (self.moves.setdefault(1, [])).append((i, j))
             self.move_number += 1
-            print(self.moves)
 
         # Sortiere Moves nach a wert, so dass er mit dem kleinsten a
         # beginnt (kleines a -> guter move)
@@ -152,7 +151,7 @@ class HexKI:
                     nodes[i][j].change_colour(0)
 
                     # ?Frage? Warum wird potential auf 1 gesetzt?
-                    nodes[i][j].pot = 1
+                    # nodes[i][j].pot = 1
 
                     # Moves für die naechste Runde abspeichern
                     (mo.setdefault(a, [])).append((i, j))
@@ -178,7 +177,7 @@ class HexKI:
         """
         if not nodes:
             nodes = self.nodes
-
+        """
         key = "".join(["".join(
             [str(n.colour) for n in row]) for row in nodes])
 
@@ -187,7 +186,7 @@ class HexKI:
             # print(value)
             # self.eval_times.append(time.clock() - t0)
             return value
-
+        """
         self.eval_number += 1
         # if not edges:
         #    edges = self.edges
@@ -212,7 +211,7 @@ class HexKI:
         else:
             value = value_1 / value_2
 
-        self.board_scores[key] = value
+        # self.board_scores[key] = value
         return value
 
     def nextMove(self):
@@ -259,7 +258,7 @@ class HexKI:
                     a = min(a, self.min_value(nodes, a, b, depth - 1))
 
                     nodes[i][j].change_colour(0)
-                    nodes[i][j].pot = 1
+                    # nodes[i][j].pot = 1
 
             # this ia a cutoff point
             if a <= b:
@@ -278,7 +277,7 @@ class HexKI:
 
                     b = max(b, self.max_value(nodes, a, b, depth - 1))
                     nodes[i][j].change_colour(0)
-                    nodes[i][j].pot = 1
+                    # nodes[i][j].pot = 1
 
             # this is a cutoff point
             if b >= a:
