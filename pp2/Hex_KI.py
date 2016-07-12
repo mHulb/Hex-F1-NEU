@@ -166,7 +166,9 @@ class HexKI:
         print(' \n'.join(
             '       '.join(str(a) for a in row) for row in show_board))
 
-        self.eval_time_average = sum(self.eval_times) / len(self.eval_times)
+        if self.eval_times:
+            self.eval_time_average = sum(self.eval_times
+                                         ) / len(self.eval_times)
         return True
 
     def evaluate(self, nodes=None):
