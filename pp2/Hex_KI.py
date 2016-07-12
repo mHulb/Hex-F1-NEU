@@ -108,15 +108,66 @@ class HexKI:
 
         # Nachfolgende ist zum Speichern der besten moves gedacht
         # Wenn man mit besseren moves anfängt, spart man sich angeblich zeit
-        if self.n == 3:
+        if self.n == 3 and self.move_number == 1:
             self.moves = {}
-            (self.moves.setdefault(1, [])).append((1, 1))
+            self.best_move = (1,1)
+            self.move_number += 1
+            return True
+
         elif self.n == 4:
-            self.moves = {}
-            (self.moves.setdefault(1, [])).append((3, 0))
-            (self.moves.setdefault(1, [])).append((2, 1))
-            (self.moves.setdefault(1, [])).append((1, 2))
-            (self.moves.setdefault(1, [])).append((0, 3))
+            if self.move_number == 1:
+                self.moves = {}
+                (self.moves.setdefault(1, [])).append((3, 0))
+                (self.moves.setdefault(1, [])).append((2, 1))
+                (self.moves.setdefault(1, [])).append((1, 2))
+                (self.moves.setdefault(1, [])).append((0, 3))
+                self.move_number += 1
+            else:
+                self.moves = {}
+                # noch in list comprehension
+                for i in range(self.n):
+                    for j in range(self.m ):
+                        (self.moves.setdefault(1, [])).append((i, j))
+        elif self.n == 5:
+            if self.move_number == 1:
+                self.move_number += 1
+                self.best_move = (2,2)
+                return True
+            # abfragen ob eins schon belegt ist
+            elif self.move_number == 2:
+                self.move_number +=1
+                self.moves = {}
+                if nodes[1][4].colour == self.opponent_colour or nodes[3][1].colour == self.opponent_colour:
+                    (self.moves.setdefault(1, [])).append((1, 4))
+                    (self.moves.setdefault(1, [])).append((3, 1))
+                elif nodes[1][1].colour == 2 or nodes[3][3].colour == 2:
+                    (self.moves.setdefault(1, [])).append((1, 1))
+                    (self.moves.setdefault(1, [])).append((3, 3))
+                else:
+                    (self.moves.setdefault(1, [])).append((1, 1))
+                    (self.moves.setdefault(1, [])).append((3, 3))
+
+
+
+            elif self.move_number == 3:
+                self.move_number += 1
+                for val in self.moves:
+                    for move in self.moves[val]:
+                        if move == (1,4) or move == (3,1):
+                            self.moves = {}
+                            (self.moves.setdefault(1, [])).append((1, 1))
+                            (self.moves.setdefault(1, [])).append((3, 3))
+                            break
+                        else:
+                            (self.moves.setdefault(1, [])).append((1, 4))
+                            (self.moves.setdefault(1, [])).append((3, 1))
+            elif self.move_number == 4:
+                self.moves = {}
+                # noch in list comprehension
+                for i in range(self.n):
+                    for j in range(self.m ):
+                        (self.moves.setdefault(1, [])).append((i, j))
+
         else:
             # Beim ersten Zug werden nur das mittlere quadrat durchsucht
             # muss noch angepasst werden mit swap später
