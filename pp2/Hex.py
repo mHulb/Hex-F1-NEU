@@ -550,10 +550,13 @@ class Game:
             else:
                 self.machine = HexKI(m, n)
                 self.machine.setColours(2, 1)
+
         elif mode == "ki":
             self.machines = {1: HexKI(m, n), 2: HexKI(m, n)}
             self.machines[1].setColours(1, 2)
             self.machines[2].setColours(2, 1)
+            self.machines[1].calculateMove()
+            self.makeMove(self.machines[1].nextMove())
 
         if mode in ("human", "inter"):
 
@@ -632,8 +635,8 @@ class Game:
                 self.makeMove(calculated_move)
 
             elif self.mode == "ki":
-                machines[self.cur_player].calculateMove()
-                self.makeMove(machines[self.cur_player].nextMove())
+                self.machines[self.cur_player].calculateMove()
+                self.makeMove(self.machines[self.cur_player].nextMove())
 
     def is_machine_turn(self, machine):
         if machine:
