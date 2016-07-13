@@ -131,12 +131,13 @@ class HexKI:
 
 
     def calculateMove(self):
+        self.best_move = self.random_move()
         self.eval_number = 0    # zum testen
         self.eval_times = []
         """
         """
         # Kann spaeter geloescht werden, ist nur zum print da
-        show_board = [["#" for i in range(self.n)] for j in range(self.m)]
+        #show_board = [["#" for i in range(self.n)] for j in range(self.m)]
         # Minimum fuer a intialisieren
         mini = 1000
         mo = {}
@@ -199,7 +200,7 @@ class HexKI:
                     (self.moves.setdefault(1, [])).append((3, 2))
                     (self.moves.setdefault(1, [])).append((3, 3))
                     (self.moves.setdefault(1, [])).append((2, 3))
-                if self.nodes[2][3].colour == 0:
+                if self.nodes[1][3].colour == 0:
                     (self.moves.setdefault(1, [])).append((2, 3))
                     top_ri = True
 
@@ -258,6 +259,9 @@ class HexKI:
                 moves = [self.moves[val]]
                 val = 0  # as integer
                 self.depth = 1
+            elif val == float("inf") or val == -float("inf"):
+                moves = [self.moves[val]]
+                self.depth = 1
             else:
                 moves = self.moves
 
@@ -280,14 +284,14 @@ class HexKI:
                     # Moves für die naechste Runde abspeichern
                     (mo.setdefault(a, [])).append((i, j))
 
-                    show_board[i][j] = round(a, 3)
+                    #show_board[i][j] = round(a, 3)
                     if a < mini:
                         mini = a
                         self.best_move = (i, j)
         self.moves = mo
         # Ausgabe der a Werte in Matrixform
-        print(' \n'.join(
-            '       '.join(str(a) for a in row) for row in show_board))
+        #print(' \n'.join(
+        #    '       '.join(str(a) for a in row) for row in show_board))
 
         if self.eval_times:
             self.eval_time_average = sum(self.eval_times
