@@ -2,7 +2,7 @@ from Hex_KI import HexKI
 from Hex import HexBoard
 import time
 
-m, n = 5, 5
+m, n = 6, 6
 testKI = HexKI(m, n)
 board = HexBoard(m, n)
 player_colour = 1

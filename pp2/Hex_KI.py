@@ -91,8 +91,16 @@ class HexKI:
 
     def chooseOrder(self, firstmove):
         """
+        First player always has a winning strategy.
         """
-        pass
+        return 1
+
+    def setColours(self, player, opponent):
+        """
+        Sets the colours for the AI
+        """
+        self.player_colour = player
+        self.opponent_colour = opponent
 
     def calculateMove(self):
         self.eval_number = 0    # zum testen
@@ -145,7 +153,7 @@ class HexKI:
                     # Daher tmporere nodes
                     nodes[i][j].change_colour(self.player_colour)
                     # theoretisch muesste hier min_value aufgerufen werden
-                    a = self.min_value(nodes, float("inf"), -float("inf"), 2)
+                    a = self.min_value(nodes, float("inf"), -float("inf"), 3)
                     # wieder zurueck setzten, damit es beim naechsten move
                     # nicht stoert
                     nodes[i][j].change_colour(0)
@@ -221,6 +229,8 @@ class HexKI:
         self.nodes[best_i][best_j].change_colour(
             self.player_colour)
 
+        print("AI BOARD")
+        print(self)
         return self.best_move
 
     def receiveMove(self, move):
@@ -228,6 +238,8 @@ class HexKI:
         """
         i, j = move
         self.nodes[i][j].change_colour(self.opponent_colour)
+        print("AI BOARD")
+        print(self)
 
     def readBoard(self, board, current=True):
         """
@@ -261,9 +273,9 @@ class HexKI:
                     # nodes[i][j].pot = 1
 
             # this ia a cutoff point
-            if a <= b:
-                return a
-            return a
+                if a <= b:
+                    return a
+        return a
 
     def min_value(self, nodes, a, b, depth):
         if (depth == 0):
@@ -279,10 +291,10 @@ class HexKI:
                     nodes[i][j].change_colour(0)
                     # nodes[i][j].pot = 1
 
-            # this is a cutoff point
-            if b >= a:
-                return b
-            return b
+                # this is a cutoff point
+                if b >= a:
+                    return b
+        return b
 
     # String representation to test logic without GUI dependency
     def __str__(self):

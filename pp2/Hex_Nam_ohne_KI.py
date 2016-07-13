@@ -2,9 +2,10 @@ from tkinter import *
 from tkinter import messagebox
 import math
 import random
-from helpers import Node
-from time import sleep, clock
 from Hex_KI import HexKI
+from copy import deepcopy
+from helpers import *
+import time
 
 """
 Hex Game
@@ -85,13 +86,30 @@ class HexGui:
         # mouse move to color the current field
         self.w.bind('<Motion>', lambda e: self.__color_field_enter(e))
 
-        self.swap_was_made = False
+    def __find_move(self, event):
+        """
+        Finds the Hexagon where is clicked on
+        """
+
+        for j in range(self.size[0]):
+            for i in range(self.size[1]):
+
+                poly = [[self.point_coordinates[j][i][k],
+                         self.point_coordinates[j][i][k + 1]]
+                        for k in range(0, 11, 2)]
+
+                # if mouse position is in the Hexagon field:
+                if self.__contains_point(event.x, event.y, poly) >= 0:
+                    if not self.field_array[j][i] and not self.game.isMachineTurn():
+                        self.game.makeMove((i, j))
+                    return
 
     def __color_field_enter(self, event):
         """
         Colours the Hexagon field where the mouse is in self.tile_hover color
         changes the color of the last Hexagon back to self.tile color
         """
+
         # go through all Hexagon fields
         for j in range(self.size[0]):
             for i in range(self.size[1]):
@@ -195,8 +213,8 @@ class HexGui:
 
     def __print_outline(self):
         """
-        Colours the top und botten outline side of the Hexagon field in red
-        and the left and right outline side in blue
+        Colours the top und botten outline player of the Hexagon field in red
+        and the left and right outline player in blue
         """
         left = self.color[2]
         top = self.color[1]
@@ -281,7 +299,7 @@ class HexGui:
         """
 
         # colors the field which is clicked/selected
-        j, i = move[0], move[1]
+        j, i = move[1], move[0]
         if self.field_array[j][i] == 0:
             self.game.round += 1
             self.field_array[j][i] = 1
@@ -293,23 +311,12 @@ class HexGui:
             self.last_field = None
 
         # Swap rule at first turn
-        print("round: {}".format(self.game.round))
-        print("is machine turn: {}".format(
-            self.game.is_machine_turn(self.game.machine)))
-        if self.game.round == 1:
-            if mode == ("inter"):
-                if not self.game.is_machine_turn(self.game.machine):
-                    self.swap_was_made = self.game.wants_to_switch((j, i))
-                else:
-                    self.setFirst()
-            elif mode == "human":
-                self.setFirst()
-            elif mode == "ki":
-                self.swap_was_made = self.game.wants_to_switch(j, i)
-
-            if self.swap_was_made:
-                pass
-                # self.swap_colors()
+        if self.game.round == 1 and self.setFirst() == 1:
+            self.game.changeTurnInit()
+            self.field_array[j][i] = 0
+            self.w.delete(latest_poly)
+            self.receiveMove(move)
+            self.game.round = 1
 
         # updates the top label to show the next player's move
         self.lab.configure(
@@ -322,32 +329,16 @@ class HexGui:
 
     def setFirst(self):
         """
-        Ask second player if he/she wants to take the first move
+        Ask Player 2 if he/she wants to take the first move
         """
+        if self.game.mode == "ki":
+            return
+
         if messagebox.askyesno(
                 'Verify', 'Möchte Spieler {} übernehmen?'.format(self.player)):
-            self.swap_was_made = True
             return 1
         else:
             return 2
-
-    def __find_move(self, event):
-        """
-        Finds the Hexagon where is clicked on
-        """
-        for j in range(self.size[0]):
-            for i in range(self.size[1]):
-
-                poly = [[self.point_coordinates[j][i][k],
-                         self.point_coordinates[j][i][k + 1]]
-                        for k in range(0, 11, 2)]
-
-                # if mouse position is in the Hexagon field:
-                if self.__contains_point(event.x, event.y, poly) >= 0:
-                    if not self.field_array[j][i]:
-                        print("i: {}, j: {}".format(i, j))
-                        self.game.makeMove((j, i))
-                    return
 
     def finish(self, player):
         """
@@ -376,14 +367,10 @@ class HexGui:
                 fill=victory_color,
                 width=3)
 
-    def swap_colors(self):
-        self.color[1], self.color[2] = self.color[2], self.color[1]
-        self.victory[1], self.victory[2] = self.victory[2], self.victory[1]
-
 
 class HexBoard:
     """
-    HexBoard: ...
+    HexBoard
     """
 
     def __init__(self, n, m):
@@ -406,9 +393,9 @@ class HexBoard:
         """
         Receives a move from the Game class.
         """
-        i, j = move[0], move[1]
+        i, j = move[1], move[0]
         print("Player {} - move on board: ({}, {})".format(
-            player, move[0] + 1, move[1] + 1))
+            player, i + 1, j + 1))
         clicked_node = self.nodes[i][j]
         clicked_node.colour = player  # change colour of node to player colour
         self.last_move = move  # store the move
@@ -435,13 +422,13 @@ class HexBoard:
                 stack.extend([n for n in node.neighbours
                               if n not in visited and n.colour == colour])
 
-        if self.__connects_both_sides(visited, colour):
+        if self.__connects_both_players(visited, colour):
             self.victory_path = visited
             return True
 
-    def __connects_both_sides(self, subgraph, colour):
+    def __connects_both_players(self, subgraph, colour):
         """
-        Checks if a subraph connects the sides of the board.
+        Checks if a subraph connects the players of the board.
         If it does, True is returned.
         """
         if colour == 1:  # "red"
@@ -496,17 +483,7 @@ class HexBoard:
         return self.victory_path
 
     def showBoard(self):
-
-        # weils in der aufgabenstellung anders herum steht...
-        def swap(colour):
-            if colour == 1:
-                return 2
-            elif colour == 2:
-                return 1
-            else:
-                return 0
-
-        return [[swap(n.colour) for n in row] for row in self.nodes]
+        return [[n.colour for n in row] for row in self.nodes]
 
 
 class Game:
@@ -516,30 +493,27 @@ class Game:
         # und eine GUI gestartet
         self.board = HexBoard(m, n)     # Spielbrett
         self.cur_player = self.chooseFirst()
-        self.cur_player = 2  # !!! TESTING
-        print("Random first: {}".format(self.cur_player))
         self.round = 0
         self.gui = HexGui(m, n, self, color_theme)   # GUI
         self.mode = mode
-        self.machine, self.machines = None, {}
+        self.machine1, self.machine2 = None, None
 
         if mode == "inter":
-            self.machine = HexKI(m, n)
-            self.machine.setColours(2, 1)
+            self.cur_player = 2
+            self.machine1 = HexKI(m, n)
+            self.machine1.opponent_colour = 2
+            self.machine1.player_colour = 1
         elif mode == "ki":
-            self.machines = {1: HexKI(m, n), 2: HexKI(m, n)}
-            self.machines[1].setColours(1, 2)
-            self.machines[2].setColours(2, 1)
-
-        if mode in ("human", "inter"):
-            # self.gui.master.mainloop()
-            if self.is_machine_turn(self.machine):
-                self.machine.calculateMove()
-                self.makeMove(self.machine.nextMove())
-            self.gui.master.mainloop()
-
-        if mode == "test":
+            self.machine1 = HexKI(m, n)
+            self.machine2 = HexKI(m, n)
+            # Make the first move
+            self.machine1.calculateMove()
+            self.makeMove(self.machine1.nextMove())
+        elif mode == "test":
             self.cur_player = 1
+
+        if mode in ["human", "inter"]:
+            self.gui.master.mainloop()
 
     # Spieler durch 1 und 2 festgelegt
     def changePlayer(self):
@@ -555,105 +529,88 @@ class Game:
     def nextPlayer(self):
         return self.cur_player % 2 + 1
 
+    # Spielfeld wird aktualisiert
+    # nach Spielzug wird Spieler am Zug geändert
+    # sets next move, increments round number and switches current player
     def makeMove(self, move):
         """
-        Spielfeld wird aktualisiert
-        nach Spielzug wird Spieler am Zug geändert
-        sets next move, increments round number and switches current player
+        Performs the next move
         """
+
+        if self.isMachineTurn():
+            print("MAKING A MACHINE TURN")
+        else:
+            print("MAKING A HUMAN TURN")
+
         if not self.board.finished():
-            print("cur_player: {}".format(self.cur_player))
             self.gui.receiveMove(move)
-            print("cur_player: {}".format(self.cur_player))
             self.board.receiveMove(move, self.cur_player)
 
-            if self.gui.swap_was_made:
-                self.gui.swap_was_made = False  # can only swap once
-                self.swap()
-            print("cur_player: {}".format(self.cur_player))
-
-            if self.mode == "inter" and not self.is_machine_turn(self.machine):
-                self.machine.receiveMove(move)
+            if self.mode == "inter":
+                self.machine1.receiveMove(move)
             elif self.mode == "ki":
-                self.machines[cur_player].receiveMove()
+                self.machine1.receiveMove(move)
+                self.machine2.receiveMove(move)
 
             self.round += 1             # nächster ist neuer Zug.
             self.changePlayer()         # anderer Spieler am Zug
             self.gui.master.update()    # used to update gui in test mode
-            print("BOARD")
-            print(self.board)
 
             if self.board.finished():
                 print("Player {} has won!".format(self.board.winner()))
                 self.gui.finish(self.board.winner())
                 self.gui.showVictoryPath()
                 self.gui.master.update()
-                if not self.mode == "human":
-                    # In test mode, endscreen remains open until closed
-                    self.gui.master.mainloop()
+                self.gui.master.mainloop()
+            elif self.isMachineTurn():
+                if self.mode == "inter":
+                    self.machine1.calculateMove()
+                    self.makeMove(self.machine1.nextMove())
 
-            elif self.mode == "inter" and self.is_machine_turn(self.machine):
-                t0 = clock()
-                print("Calculating machine move...")
-                self.machine.calculateMove()
-                calculated_move = self.machine.nextMove()
-                print(
-                    "Evaluations: {} boards".format(self.machine.eval_number))
-                print(
-                    "Average time per evaluation: {} sec".format(
-                     self.machine.eval_time_average))
-                print(
-                    "Calculation for move {1} took {0} seconds.".format(
-                     clock() - t0, calculated_move))
-                self.makeMove(calculated_move)
-
-            elif self.mode == "ki":
-                machines[self.cur_player].calculateMove()
-                self.makeMove(machines[self.cur_player].nextMove())
-
-    def is_machine_turn(self, machine):
-        if machine:
-            return self.cur_player == machine.player_colour
-        else:
-            return False
-
-    def wants_to_switch(self, move):
-        if mode == "inter":
-            return self.machine.chooseOrder(move) == 1
-        if mode == "ki":
-            return self.machines[self.nextPlayer(move)].chooseOrder == 1
+                elif self.mode == "ki":
+                    if self.cur_player == self.machine1.player_colour:
+                        machine = self.machine1
+                    else:
+                        machine = self.machine2
+                    machine.calculateMove()
+                    self.makeMove(machine.nextMove())
+            print(self.board)
 
     def getBoard(self):
         """
-        Return current board in the form of a nested list with
-        elements from {0, 1, 2}.
-        0: empty, 1: player1, 2: player2
-
+        TODO aus Aufgabenstellung:
+        soll den derzeitigen Status des Spielbretts in Form von board (siehe
+        readBoard) zuruckgeben. Ein board ist dabei eine geschachtelte
+        m × n Liste, also mit m Zeilen und n Spalten; die Felder sind dabei
+        mit 0 (nicht belegt), 1 (belegt von Spieler 1) oder 2 (belegt von
+        Spieler 2) befullt. Ist die Anzahl der belegten Felder gerade,
+        soll 1 ziehen, andernfalls 2. Hierbei muss 1 einen Pfad von links
+        nach rechts und 2 einen Pfad von unten nach oben aufbauen.
         """
         return self.board.showBoard()
 
-    def swap(self):
-        if self.mode == "human":
-            pass
+    def changeTurnInit(self):
+        self.changePlayer()
         if self.mode == "inter":
-            self.machine.setColours(
-                self.machine.opponent_colour, self.machine.player_colour)
-        if self.mode == "ki":
-            self.machines[1], self.machines[2] = \
-            self.machines[2], self.machines[1]
+            self.machine1.chooseOrder(self.nextPlayer())
 
-        # self.changePlayer()
+    def isMachineTurn(self):
+        if mode == "inter":
+            return self.cur_player == self.machine1.player_colour
+        else:
+            return mode == "ki"
 
 
 if __name__ == "__main__":
 
     mode = input(
         'Please enter game mode (human, inter, ki, test): ').strip().lower()
+
     theme = input(
         "Select color scheme (standard, dark, b/w): ").strip().lower()
 
-    # Mode for human vs. human
-    if mode in ("human", "inter", "ki"):
+    # Non-test mode
+    if mode in ["human", "inter", "ki"]:
         n, m = 0, 0
         while n < 2 or m < 2:
             dim = input("Please enter dimensions (min 2) (n m): ")
@@ -680,7 +637,7 @@ if __name__ == "__main__":
 
             for move in moves:
                 hex_game.makeMove(move)
-                sleep(0.7)
+                time.sleep(0.7)
 
     else:
         print("Gamemode {} is not available.".format(mode))
