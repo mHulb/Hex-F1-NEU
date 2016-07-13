@@ -11,6 +11,7 @@ class HexKI:
     def __init__(self, m, n):
         """
         """
+        self.depth = 2
         self.m = m  # number of rows
         self.n = n  # number of columns
         self.move_number = 1
@@ -33,6 +34,7 @@ class HexKI:
         self.eval_number = 0
         self.eval_times = []
         self.board_scores = {}
+        self.eval_time_average = 0
 
     def __make_edges(self):
         edges = []
@@ -91,29 +93,51 @@ class HexKI:
 
     def chooseOrder(self, firstmove):
         """
-        First player always has a winning strategy.
         """
-        return 1
+        self.move_number += 1
+        if self.n == 1:
+            if firstmove(0,1):
+                return 1
+            else:
+                return 2
+        elif self.n == 2:
+            if firstmove == (1,0):
+                return 1
+            else:
+                return 2
+        elif self.n == 3:
+            if firstmove == (1,1):
+                return 1
+            else:
+                return 2
+        elif self.n == 5:
+            if firstmove == (2,2):
+                return 1
+            else:
+                return 2
+        elif self.n % 2 == 0:
+            if firstmove[0]+firstmove[1] == self.n-1:
+                self.move_number +=1
+                return 1  # wechsel?
+            else:
+                return 2 # kein wechsel?
+        else:
+            if firstmove[0] == self.n//2 and firstmove[1] == self.n//2:
+                self.move_number += 1
+                return 1 # wechsel?
+            else:
+                return 2 # kein wechsel?
 
-    def setColours(self, player, opponent):
-        """
-        Sets the colours for the AI
-        """
-        self.player_colour = player
-        self.opponent_colour = opponent
 
-    def swapColours(self):
-        self.player_colour, self.opponent_colour = \
-        self.opponent_colour, self.player_colour
 
     def calculateMove(self):
+        self.best_move = self.random_move()
         self.eval_number = 0    # zum testen
         self.eval_times = []
-        self.board_scores = {}
         """
         """
         # Kann spaeter geloescht werden, ist nur zum print da
-        show_board = [["#" for i in range(self.n)] for j in range(self.m)]
+        #show_board = [["#" for i in range(self.n)] for j in range(self.m)]
         # Minimum fuer a intialisieren
         mini = 1000
         mo = {}
@@ -121,34 +145,126 @@ class HexKI:
 
         # Nachfolgende ist zum Speichern der besten moves gedacht
         # Wenn man mit besseren moves anfängt, spart man sich angeblich zeit
+        if self.n == 2:
+            if self.move_number == 1:
+                self.best_move = (1,0)
+                self.move_number += 1
+                return True
+            else:
+                self.moves = {}
+                (self.moves.setdefault(1, [])).append((1, 0))
+                (self.moves.setdefault(1, [])).append((1, 1))
 
-        # Beim ersten Zug werden nur das mittlere quadrat durchsucht
-        # muss noch angepasst werden mit swap später
-        if self.move_number == 1:
+
+        elif self.n == 3 and self.move_number == 1:
             self.moves = {}
-            # noch in list comprehension
-            for i in range(1, self.n - 1):
-                for j in range(1, self.m - 1):
-                    (self.moves.setdefault(1, [])).append((i, j))
-
+            self.best_move = (1,1)
             self.move_number += 1
+            self.depth -= 2
+            return True
 
-        # Beim zweiten move werden alle fehlenden moves hinzugefuegt
-        elif self.move_number == 2:
-            for i in range(self.n):
-                for j in range(self.m):
-                    if i not in range(1, self.n - 1) or j not in range(1, self.m - 1):
+        elif self.n == 4:
+            if self.move_number == 1:
+                self.moves = {}
+                (self.moves.setdefault(1, [])).append((3, 0))
+                (self.moves.setdefault(1, [])).append((2, 1))
+                (self.moves.setdefault(1, [])).append((1, 2))
+                (self.moves.setdefault(1, [])).append((0, 3))
+                self.move_number += 1
+            else:
+                self.moves = {}
+                # noch in list comprehension
+                for i in range(self.n):
+                    for j in range(self.m ):
                         (self.moves.setdefault(1, [])).append((i, j))
-            self.move_number += 1
+        elif self.n == 5:
+            if self.move_number == 1:
+                self.move_number += 1
+                self.best_move = (2,2)
+                return True
+            # abfragen ob eins schon belegt ist
+            elif self.move_number == 2:
+                self.move_number +=1
+                self.moves = {}
+                top_left,bottom_left,top_ri,bottom_ri = False,False,False,False
+                if self.nodes[1][1].colour == 0 and self.nodes[1][2].colour == 0 and self.nodes[2][1].colour == 0:
+                    top_left = True
+                    (self.moves.setdefault(1, [])).append((1, 1))
+                    (self.moves.setdefault(1, [])).append((1, 2))
+                    (self.moves.setdefault(1, [])).append((2, 1))
+                if self.nodes[3][1].colour == 0:
+                    bottom_left = True
+                    (self.moves.setdefault(1, [])).append((3, 1))
+                if self.nodes[3][2].colour == 0 and self.nodes[3][3].colour == 0 and self.nodes[2][3].colour == 0:
+                    bottom_ri = True
+                    (self.moves.setdefault(1, [])).append((3, 2))
+                    (self.moves.setdefault(1, [])).append((3, 3))
+                    (self.moves.setdefault(1, [])).append((2, 3))
+                if self.nodes[1][3].colour == 0:
+                    (self.moves.setdefault(1, [])).append((2, 3))
+                    top_ri = True
+
+                if top_left == False:
+                    self.best_move = (3,1)
+                    return True
+                elif bottom_left == False:
+                    self.best_move = (1,1)
+                    return True
+                elif top_ri == False:
+                    self.best_move = (3, 3)
+                    return True
+                else:
+                    self.best_move = (1,3)
+                    return True
+
+            elif self.move_number == 3:
+                self.move_number += 1
+
+            elif self.move_number == 4:
+                self.moves = {}
+                # noch in list comprehension
+                for i in range(self.n):
+                    for j in range(self.m ):
+                        (self.moves.setdefault(1, [])).append((i, j))
+
+        else:
+            # Beim ersten Zug werden nur das mittlere quadrat durchsucht
+            # muss noch angepasst werden mit swap später
+            if self.move_number == 1:
+                self.moves = {}
+                # noch in list comprehension
+                for i in range(1, self.n - 1):
+                    for j in range(1, self.m - 1):
+                        (self.moves.setdefault(1, [])).append((i, j))
+
+                self.move_number += 1
+                print(self.moves)
+
+            # Beim zweiten move werden alle fehlenden moves hinzugefuegt
+            else:
+                self.moves = {}
+                for i in range(self.n):
+                    for j in range(self.m):
+                        if i not in range(1, self.n - 1) or j not in range(1, self.m - 1):
+                            (self.moves.setdefault(1, [])).append((i, j))
+                self.move_number += 1
+                print(self.moves)
 
         # Sortiere Moves nach a wert, so dass er mit dem kleinsten a
         # beginnt (kleines a -> guter move)
         for val in sorted(self.moves):
-            if val == 0 and len(self.moves[val]) > 1:
+            if val == 0:
+                self.depth = 1
+            elif val == 0 and len(self.moves[val]) > 1:
                 moves = [self.moves[val]]
                 val = 0  # as integer
+                self.depth = 1
+            elif val == float("inf") or val == -float("inf"):
+                moves = [self.moves[val]]
+                self.depth = 1
             else:
                 moves = self.moves
+
 
             for i, j in moves[val]:
                 if nodes[i][j].colour == 0:
@@ -157,25 +273,25 @@ class HexKI:
                     # Daher tmporere nodes
                     nodes[i][j].change_colour(self.player_colour)
                     # theoretisch muesste hier min_value aufgerufen werden
-                    a = self.min_value(nodes, float("inf"), -float("inf"), 3)
+                    a = self.min_value(nodes, float("inf"), -float("inf"), self.depth)
                     # wieder zurueck setzten, damit es beim naechsten move
                     # nicht stoert
                     nodes[i][j].change_colour(0)
 
                     # ?Frage? Warum wird potential auf 1 gesetzt?
-                    # nodes[i][j].pot = 1
+                    #nodes[i][j].pot = 1
 
                     # Moves für die naechste Runde abspeichern
                     (mo.setdefault(a, [])).append((i, j))
 
-                    show_board[i][j] = round(a, 3)
+                    #show_board[i][j] = round(a, 3)
                     if a < mini:
                         mini = a
                         self.best_move = (i, j)
         self.moves = mo
         # Ausgabe der a Werte in Matrixform
-        print(' \n'.join(
-            '       '.join(str(a) for a in row) for row in show_board))
+        #print(' \n'.join(
+        #    '       '.join(str(a) for a in row) for row in show_board))
 
         if self.eval_times:
             self.eval_time_average = sum(self.eval_times
@@ -189,16 +305,16 @@ class HexKI:
         """
         if not nodes:
             nodes = self.nodes
-        """
+
         key = "".join(["".join(
             [str(n.colour) for n in row]) for row in nodes])
 
         value = self.board_scores.get(key)
         if value:
             # print(value)
-            # self.eval_times.append(time.clock() - t0)
+            self.eval_times.append(time.clock() - t0)
             return value
-        """
+
         self.eval_number += 1
         # if not edges:
         #    edges = self.edges
@@ -223,8 +339,20 @@ class HexKI:
         else:
             value = value_1 / value_2
 
-        # self.board_scores[key] = value
+        self.board_scores[key] = value
         return value
+
+
+    def setColours(self, player, opponent):
+        """
+        Sets the colours for the AI
+        """
+        self.player_colour = player
+        self.opponent_colour = opponent
+
+    def swapColours(self):
+        self.player_colour, self.opponent_colour = \
+        self.opponent_colour, self.player_colour
 
     def nextMove(self):
         """
@@ -309,3 +437,5 @@ class HexKI:
         for i, row in enumerate(colours):
             output += i * "   " + "   ".join(row) + "\n"
         return output
+
+

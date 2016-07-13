@@ -4,7 +4,7 @@ import math
 import random
 from helpers import Node
 from time import sleep, clock
-from Hex_KI_Patrick import HexKI
+from Hex_KI import HexKI
 from Hex_KI_RE import HexKI_R
 
 """
