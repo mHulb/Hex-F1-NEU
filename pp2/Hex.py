@@ -5,6 +5,7 @@ import random
 from helpers import Node
 from time import sleep, clock
 from Hex_KI import HexKI
+from Hex_KI_RE import HexKI_R
 
 """
 Hex Game
@@ -102,6 +103,7 @@ class HexGui:
         p1 = self.players[1]
         p2 = self.players[2]
         self.color[p1], self.color[p2] = self.color[p2], self.color[p1]
+        self.victory[p1], self.victory[p2] = self.victory[p2], self.victory[p1]
         print(self.players)
         print(self.color)
 
@@ -185,7 +187,11 @@ class HexGui:
         """
         m = self.size[0]
         n = self.size[1]
+
         edge_length = 24
+        if n < 6:
+            edge_length = 40
+
         # calculates the size of the Hexagon
         y_top, x_right = self.__Hex_size(edge_length)
         canvas_width = x_right * n + x_right * m / 2 + 50
@@ -301,7 +307,6 @@ class HexGui:
         # colors the field which is clicked/selected
         j, i = move[0], move[1]
         if self.field_array[j][i] == 0:
-            self.game.round += 1
             self.field_array[j][i] = 1
             latest_poly = self.w.create_polygon(
                 list(self.point_coordinates[j][i]),
@@ -310,31 +315,13 @@ class HexGui:
                 width=3)
             self.last_field = None
 
-        # Swap rule at first turn
-        print("round: {}".format(self.game.round))
-        print("is machine turn: {}".format(
-            self.game.is_machine_turn(self.game.machine)))
-        if self.game.round == 1:
-            if mode == ("inter"):
-                if not self.game.is_machine_turn(self.game.machine):
-                    self.swap_was_made = self.game.wants_to_switch((j, i))
-                else:
-                    self.setFirst()
-            elif mode == "human" and self.setFirst() == 1:
-                self.swap_players()
-            elif mode == "ki":
-                self.swap_was_made = self.game.wants_to_switch(j, i)
-
-            if self.swap_was_made:
-                pass
+        self.update_label()
 
     def update_label(self):
         # updates the top label to show the next player's move
-        print("updated label!")
-        player = self.players[self.game.currentPlayer()]
-        print("current player: {}".format(player))
-        print(player)
-        print(self.color)
+        player = self.players[self.game.nextPlayer()]
+        print("updating label with player {} and colour {}".format(
+            player, self.color[player]))
         self.lab.configure(
             text="Spieler {} ist am Zug".format(player),
             fg=self.tile,
@@ -407,6 +394,7 @@ class HexGui:
         self.color[1], self.color[2] = self.color[2], self.color[1]
         self.victory[1], self.victory[2] = self.victory[2], self.victory[1]
 """
+
 
 class HexBoard:
     """
@@ -542,24 +530,33 @@ class Game:
         # bei human soll ein Spielfeld erstellt werden
         # und eine GUI gestartet
         self.board = HexBoard(m, n)     # Spielbrett
+        self.m, self.n = m, n
         self.cur_player = self.chooseFirst()
+        # self.cur_player = 2     # !!! TESTING
         print("Random first: {}".format(self.cur_player))
-        self.round = 0
+        self.round = 1
         self.gui = HexGui(m, n, self, color_theme, name1, name2)
         self.mode = mode
         self.was_switched = False
         self.machine, self.machines = None, {}
+        self.has_switched = False
 
         if mode == "inter":
-            self.machine = HexKI(m, n)
-            self.machine.setColours(2, 1)
+            if not self.n == self.m:
+                self.machine = HexKI_R(m, n)
+                human_colour = random([1, 2])
+                machine_colour = [1, 2].remove(human_colour)[0]
+                self.machine.setColours(machine_colour, human_colour)
+            else:
+                self.machine = HexKI(m, n)
+                self.machine.setColours(2, 1)
         elif mode == "ki":
             self.machines = {1: HexKI(m, n), 2: HexKI(m, n)}
             self.machines[1].setColours(1, 2)
             self.machines[2].setColours(2, 1)
 
         if mode in ("human", "inter"):
-            # self.gui.master.mainloop()
+
             if self.is_machine_turn(self.machine):
                 self.machine.calculateMove()
                 self.makeMove(self.machine.nextMove())
@@ -589,28 +586,26 @@ class Game:
         sets next move, increments round number and switches current player
         """
         if not self.board.finished():
-            print("cur_player: {}".format(self.cur_player))
             self.gui.receiveMove(move)
-            print("cur_player: {}".format(self.cur_player))
             self.board.receiveMove(move, self.cur_player)
 
-            if self.gui.swap_was_made:
-                self.gui.swap_was_made = False  # can only swap once
-                # remember that we swapped in the beginning
-                self.was_switched = True
-                self.swap()
-            print("cur_player: {}".format(self.cur_player))
-
-            if self.mode == "inter" and not self.is_machine_turn(self.machine):
-                self.machine.receiveMove(move)
+            if self.mode == "inter":
+                self.machine.receiveMove(move, self.currentPlayer())
+                print("machine received move!")
             elif self.mode == "ki":
-                self.machines[cur_player].receiveMove()
+                self.machines[1].receiveMove(move, self.currentPlayer())
+                self.machines[2].receiveMove(move, self.currentPlayer())
+
+            if self.round == 1:
+                self.swapRule(move)
 
             self.round += 1             # nächster ist neuer Zug.
             self.changePlayer()         # anderer Spieler am Zug
             self.gui.master.update()    # used to update gui in test mode
-            print("BOARD")
-            print(self.board)
+            print("current player is: {}".format(self.currentPlayer()))
+            # self.gui.update_label()
+            print("sleeping...")
+            # sleep(1)
 
             if self.board.finished():
                 print("Player {} has won!".format(self.board.winner()))
@@ -623,7 +618,7 @@ class Game:
 
             elif self.mode == "inter" and self.is_machine_turn(self.machine):
                 t0 = clock()
-                print("Calculating machine move...")
+                print("Calculating machine move...HERE!!!")
                 self.machine.calculateMove()
                 calculated_move = self.machine.nextMove()
                 print(
@@ -640,20 +635,11 @@ class Game:
                 machines[self.cur_player].calculateMove()
                 self.makeMove(machines[self.cur_player].nextMove())
 
-            if not self.board.finished():
-                self.gui.update_label()
-
     def is_machine_turn(self, machine):
         if machine:
             return self.cur_player == machine.player_colour
         else:
             return False
-
-    def wants_to_switch(self, move):
-        if mode == "inter":
-            return self.machine.chooseOrder(move) == 1
-        if mode == "ki":
-            return self.machines[self.nextPlayer(move)].chooseOrder == 1
 
     def getBoard(self):
         """
@@ -663,6 +649,24 @@ class Game:
 
         """
         return self.board.showBoard()
+
+    def swapRule(self, firstmove):
+        if mode == "human":
+            if self.gui.setFirst() == 1:
+                self.gui.swap_players()
+                self.gui.update_label()
+        if mode == "inter":
+            if not self.is_machine_turn(self.machine):
+                if self.machine.chooseOrder(firstmove) == 1:
+                    self.gui.swap_players()
+                    self.machine.swapColours()
+                    self.gui.update_label()
+            elif self.gui.setFirst() == 1:
+                    self.gui.swap_players()
+                    self.machine.swapColours()
+                    self.gui.update_label()
+        if mode == "ki":
+            pass
 
     def swap(self):
         if self.mode == "human":
