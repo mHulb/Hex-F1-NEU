@@ -204,5 +204,3 @@ class HexKI_R(object):
             # rightmost side
             row[self.m - 1].neighbours.append(right_bound)
             right_bound.neighbours.append(row[self.m - 1])
-
-

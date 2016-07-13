@@ -95,49 +95,46 @@ class HexKI:
         """
         """
         self.move_number += 1
+        i, j = firstmove
         if self.n == 1:
-            if firstmove(0,1):
+            if (i, j) == (0, 1):
                 return 1
             else:
                 return 2
         elif self.n == 2:
-            if firstmove == (1,0):
+            if (i, j) == (1, 0):
                 return 1
             else:
                 return 2
         elif self.n == 3:
-            if firstmove == (1,1):
+            if (i, j) == (1, 1):
                 return 1
             else:
                 return 2
         elif self.n == 5:
-            if firstmove == (2,2):
+            if (i, j) == (2, 2):
                 return 1
             else:
                 return 2
         elif self.n % 2 == 0:
-            if firstmove[0]+firstmove[1] == self.n-1:
-                self.move_number +=1
-                return 1  # wechsel?
-            else:
-                return 2 # kein wechsel?
-        else:
-            if firstmove[0] == self.n//2 and firstmove[1] == self.n//2:
+            if i + j == self.n - 1:
                 self.move_number += 1
-                return 1 # wechsel?
+                return 1    # wechsel?
             else:
-                return 2 # kein wechsel?
-
-
+                return 2    # kein wechsel?
+        else:
+            if i == self.n // 2 and j == self.n // 2:
+                self.move_number += 1
+                return 1    # wechsel?
+            else:
+                return 2    # kein wechsel?
 
     def calculateMove(self):
-        self.best_move = self.random_move()
         self.eval_number = 0    # zum testen
         self.eval_times = []
         """
         """
-        # Kann spaeter geloescht werden, ist nur zum print da
-        #show_board = [["#" for i in range(self.n)] for j in range(self.m)]
+        self.best_move = self.random_move()
         # Minimum fuer a intialisieren
         mini = 1000
         mo = {}
@@ -147,7 +144,7 @@ class HexKI:
         # Wenn man mit besseren moves anfängt, spart man sich angeblich zeit
         if self.n == 2:
             if self.move_number == 1:
-                self.best_move = (1,0)
+                self.best_move = (1, 0)
                 self.move_number += 1
                 return True
             else:
@@ -155,10 +152,9 @@ class HexKI:
                 (self.moves.setdefault(1, [])).append((1, 0))
                 (self.moves.setdefault(1, [])).append((1, 1))
 
-
         elif self.n == 3 and self.move_number == 1:
             self.moves = {}
-            self.best_move = (1,1)
+            self.best_move = (1, 1)
             self.move_number += 1
             self.depth -= 2
             return True
@@ -175,46 +171,57 @@ class HexKI:
                 self.moves = {}
                 # noch in list comprehension
                 for i in range(self.n):
-                    for j in range(self.m ):
+                    for j in range(self.m):
                         (self.moves.setdefault(1, [])).append((i, j))
+
         elif self.n == 5:
             if self.move_number == 1:
                 self.move_number += 1
-                self.best_move = (2,2)
+                self.best_move = (2, 2)
                 return True
             # abfragen ob eins schon belegt ist
             elif self.move_number == 2:
-                self.move_number +=1
+                self.move_number += 1
                 self.moves = {}
-                top_left,bottom_left,top_ri,bottom_ri = False,False,False,False
-                if self.nodes[1][1].colour == 0 and self.nodes[1][2].colour == 0 and self.nodes[2][1].colour == 0:
+                top_left, bottom_left = False, False
+                top_right, bottom_right = False, False
+
+                if (self.nodes[1][1].colour == 0 and
+                    self.nodes[1][2].colour == 0 and
+                    self.nodes[2][1].colour == 0):
+
                     top_left = True
                     (self.moves.setdefault(1, [])).append((1, 1))
                     (self.moves.setdefault(1, [])).append((1, 2))
                     (self.moves.setdefault(1, [])).append((2, 1))
+
                 if self.nodes[3][1].colour == 0:
                     bottom_left = True
                     (self.moves.setdefault(1, [])).append((3, 1))
-                if self.nodes[3][2].colour == 0 and self.nodes[3][3].colour == 0 and self.nodes[2][3].colour == 0:
-                    bottom_ri = True
+                if (self.nodes[3][2].colour == 0 and
+                    self.nodes[3][3].colour == 0 and
+                    self.nodes[2][3].colour == 0):
+
+                    bottom_right = True
                     (self.moves.setdefault(1, [])).append((3, 2))
                     (self.moves.setdefault(1, [])).append((3, 3))
                     (self.moves.setdefault(1, [])).append((2, 3))
+
                 if self.nodes[1][3].colour == 0:
                     (self.moves.setdefault(1, [])).append((2, 3))
-                    top_ri = True
+                    top_right = True
 
-                if top_left == False:
-                    self.best_move = (3,1)
+                if not top_left:
+                    self.best_move = (3, 1)
                     return True
-                elif bottom_left == False:
-                    self.best_move = (1,1)
+                elif not bottom_left:
+                    self.best_move = (1, 1)
                     return True
-                elif top_ri == False:
+                elif not top_right:
                     self.best_move = (3, 3)
                     return True
                 else:
-                    self.best_move = (1,3)
+                    self.best_move = (1, 3)
                     return True
 
             elif self.move_number == 3:
@@ -224,7 +231,7 @@ class HexKI:
                 self.moves = {}
                 # noch in list comprehension
                 for i in range(self.n):
-                    for j in range(self.m ):
+                    for j in range(self.m):
                         (self.moves.setdefault(1, [])).append((i, j))
 
         else:
@@ -245,7 +252,8 @@ class HexKI:
                 self.moves = {}
                 for i in range(self.n):
                     for j in range(self.m):
-                        if i not in range(1, self.n - 1) or j not in range(1, self.m - 1):
+                        if (i not in range(1, self.n - 1) or
+                            j not in range(1, self.m - 1)):
                             (self.moves.setdefault(1, [])).append((i, j))
                 self.move_number += 1
                 print(self.moves)
@@ -265,7 +273,6 @@ class HexKI:
             else:
                 moves = self.moves
 
-
             for i, j in moves[val]:
                 if nodes[i][j].colour == 0:
                     # Zum probieren des jeweiligen moves muss die Farbe
@@ -273,25 +280,17 @@ class HexKI:
                     # Daher tmporere nodes
                     nodes[i][j].change_colour(self.player_colour)
                     # theoretisch muesste hier min_value aufgerufen werden
-                    a = self.min_value(nodes, float("inf"), -float("inf"), self.depth)
+                    a = self.min_value(
+                        nodes, float("inf"), -float("inf"), self.depth)
                     # wieder zurueck setzten, damit es beim naechsten move
                     # nicht stoert
                     nodes[i][j].change_colour(0)
-
-                    # ?Frage? Warum wird potential auf 1 gesetzt?
-                    #nodes[i][j].pot = 1
-
                     # Moves für die naechste Runde abspeichern
                     (mo.setdefault(a, [])).append((i, j))
-
-                    #show_board[i][j] = round(a, 3)
                     if a < mini:
                         mini = a
                         self.best_move = (i, j)
         self.moves = mo
-        # Ausgabe der a Werte in Matrixform
-        #print(' \n'.join(
-        #    '       '.join(str(a) for a in row) for row in show_board))
 
         if self.eval_times:
             self.eval_time_average = sum(self.eval_times
@@ -342,7 +341,6 @@ class HexKI:
         self.board_scores[key] = value
         return value
 
-
     def setColours(self, player, opponent):
         """
         Sets the colours for the AI
@@ -351,8 +349,8 @@ class HexKI:
         self.opponent_colour = opponent
 
     def swapColours(self):
-        self.player_colour, self.opponent_colour = \
-        self.opponent_colour, self.player_colour
+        (self.player_colour, self.opponent_colour) = (
+            self.opponent_colour, self.player_colour)
 
     def nextMove(self):
         """
@@ -437,5 +435,3 @@ class HexKI:
         for i, row in enumerate(colours):
             output += i * "   " + "   ".join(row) + "\n"
         return output
-
-
