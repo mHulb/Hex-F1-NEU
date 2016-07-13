@@ -92,16 +92,33 @@ class HexKI:
     def chooseOrder(self, firstmove):
         """
         """
-        if self.n % 2 == 0:
+        if self.n == 1:
+            return 1
+        elif self.n == 2:
+            if firstmove == (1,0):
+                return 1
+            else:
+                return 2
+        elif self.n == 3:
+            if firstmove == (1,1):
+                return 1
+            else:
+                return 2
+        elif self.n == 5:
+            if firstmove == (2,2):
+                return 1
+            else:
+                return 2
+        elif self.n % 2 == 0:
             if firstmove[0]+firstmove[1] == self.n-1:
-                return 1 # wechsel?
                 self.move_number +=1
+                return 1  # wechsel?
             else:
                 return 2 # kein wechsel?
         else:
             if firstmove[0] == self.n//2 and firstmove[1] == self.n//2:
-                return 1 # wechsel?
                 self.move_number += 1
+                return 1 # wechsel?
             else:
                 return 2 # kein wechsel?
 
@@ -141,7 +158,7 @@ class HexKI:
                 for i in range(self.n):
                     for j in range(self.m ):
                         (self.moves.setdefault(1, [])).append((i, j))
-        elif self.n == 5 or self.n == 6:
+        elif self.n == 5:
             if self.move_number == 1:
                 self.move_number += 1
                 self.best_move = (2,2)
@@ -268,7 +285,7 @@ class HexKI:
         value = self.board_scores.get(key)
         if value:
             # print(value)
-            # self.eval_times.append(time.clock() - t0)
+            self.eval_times.append(time.clock() - t0)
             return value
 
         self.eval_number += 1
@@ -306,6 +323,13 @@ class HexKI:
             self.player_colour)
 
         return self.best_move
+
+    def setColours(self, player, opponent):
+        """
+        Sets the colours for the AI
+        """
+        self.player_colour = player
+        self.opponent_colour = opponent
 
     def receiveMove(self, move):
         """
