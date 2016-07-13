@@ -102,6 +102,10 @@ class HexKI:
         self.player_colour = player
         self.opponent_colour = opponent
 
+    def swapColours(self):
+        self.player_colour, self.opponent_colour = \
+        self.opponent_colour, self.player_colour
+
     def calculateMove(self):
         self.eval_number = 0    # zum testen
         self.eval_times = []
@@ -233,11 +237,13 @@ class HexKI:
         print(self)
         return self.best_move
 
-    def receiveMove(self, move):
+    def receiveMove(self, move, colour=None):
         """
         """
         i, j = move
-        self.nodes[i][j].change_colour(self.opponent_colour)
+        if not colour:
+            colour = self.opponent_colour
+        self.nodes[i][j].change_colour(colour)
         print("AI BOARD")
         print(self)
 

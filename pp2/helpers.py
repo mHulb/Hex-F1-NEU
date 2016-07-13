@@ -213,17 +213,5 @@ class Dijkstra():
                 if v.pot > u.pot + edge.weight(player_num):
                     v.pot = u.pot + edge.weight(player_num)
             heapq.heapify(heap)
-        
-        n = len(nodes)
-        show = [[n.pot for n in row] for row in nodes]
-        tmp = []
-        for i in range(n):
-            if player_num == 1:
-                tmp.append(nodes[n-1][i].pot)
-            else:
-                tmp.append(nodes[i][n-1].pot)
-        val = tmp.count(max(tmp))
 
-        self.value = min(tmp)
-        
-        # self.value = target.pot
+        self.value = target.pot
