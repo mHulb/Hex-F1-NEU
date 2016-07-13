@@ -45,11 +45,16 @@ class HexGui:
     HexGui: Creates the GUI for the Hex Game.
     """
 
-    def __init__(self, m, n, game, color_theme="standard"):
-        theme = COLOR_THEMES[color_theme]
+    def __init__(self, m, n, game, theme="standard", player1=1, player2=2):
+        theme = COLOR_THEMES[theme]
         # set colors from theme
-        self.color = {1: theme["color_1"], 2: theme["color_2"]}
-        self.victory = {1: theme["victory_1"], 2: theme["victory_2"]}
+        self.color = {
+            player1: theme["color_1"], player2: theme["color_2"],
+            1: theme["color_1"], 2: theme["color_2"]}
+        self.victory = {
+            player1: theme["victory_1"], player2: theme["victory_2"]}
+
+        self.players = {1: player1, 2: player2}
         self.bg = theme["bg"]
         self.tile = theme["tile"]
         self.tile_outline = theme["tile_outline"]
@@ -69,11 +74,14 @@ class HexGui:
         self.master.configure(background=self.bg)
         self.player = game.currentPlayer()
         # set color and name from player label
+        player = self.players[self.game.currentPlayer()]
+        print("initial player: {}".format(player))
+        print(self.color)
         self.lab = Label(
             self.master,
-            text="Spieler {} ist am Zug".format(self.game.currentPlayer()),
+            text="Spieler {} ist am Zug".format(player),
             fg=self.tile,
-            bg=self.color[self.game.currentPlayer()])
+            bg=self.color[player])
 
         self.lab.pack()
         # creates board with hexagons
@@ -86,6 +94,16 @@ class HexGui:
         self.w.bind('<Motion>', lambda e: self.__color_field_enter(e))
 
         self.swap_was_made = False
+
+    def swap_players(self):
+        print(self.players)
+        print("{} switches with {}.".format(self.players[1], self.players[2]))
+        self.players[1], self.players[2] = self.players[2], self.players[1]
+        p1 = self.players[1]
+        p2 = self.players[2]
+        self.color[p1], self.color[p2] = self.color[p2], self.color[p1]
+        print(self.players)
+        print(self.color)
 
     def __color_field_enter(self, event):
         """
@@ -302,20 +320,25 @@ class HexGui:
                     self.swap_was_made = self.game.wants_to_switch((j, i))
                 else:
                     self.setFirst()
-            elif mode == "human":
-                self.setFirst()
+            elif mode == "human" and self.setFirst() == 1:
+                self.swap_players()
             elif mode == "ki":
                 self.swap_was_made = self.game.wants_to_switch(j, i)
 
             if self.swap_was_made:
                 pass
-                # self.swap_colors()
 
+    def update_label(self):
         # updates the top label to show the next player's move
+        print("updated label!")
+        player = self.players[self.game.currentPlayer()]
+        print("current player: {}".format(player))
+        print(player)
+        print(self.color)
         self.lab.configure(
-            text="Spieler {} ist am Zug".format(self.game.nextPlayer()),
+            text="Spieler {} ist am Zug".format(player),
             fg=self.tile,
-            bg=self.color[self.game.nextPlayer()])
+            bg=self.color[player])
 
     def __color(self, player):
         return self.color[player]
@@ -324,8 +347,11 @@ class HexGui:
         """
         Ask second player if he/she wants to take the first move
         """
+        player = self.players[self.game.currentPlayer()]
+        next_player = self.players[self.game.nextPlayer()]
         if messagebox.askyesno(
-                'Verify', 'Möchte Spieler {} übernehmen?'.format(self.player)):
+                'Verify', 'Möchte Spieler {1} den Zug von Spieler {0} übernehmen?'.format(
+                    player, next_player)):
             self.swap_was_made = True
             return 1
         else:
@@ -353,11 +379,11 @@ class HexGui:
         """
         If the Game is finished, the player label is updated with the winner
         """
-
+        player = self.players[self.game.nextPlayer()]
         self.lab.configure(
-            text="Spieler {} hat gewonnen!".format(self.game.nextPlayer()),
+            text="Spieler {} hat gewonnen!".format(player),
             fg=self.tile,
-            bg=self.color[self.game.nextPlayer()])
+            bg=self.color[player])
 
     def showVictoryPath(self):
         """
@@ -366,8 +392,9 @@ class HexGui:
         Klasse HexBoard eine Verbindungsstrecke visualisieren, die das
         Spielende darstellt.
         """
+        player = self.players[self.game.nextPlayer()]
         victory_path = self.game.board.getVictoryPath()
-        victory_color = self.victory[self.game.nextPlayer()]
+        victory_color = self.victory[player]
 
         for node in victory_path:
             self.w.create_polygon(
@@ -375,11 +402,11 @@ class HexGui:
                 outline=self.tile_outline,
                 fill=victory_color,
                 width=3)
-
+"""
     def swap_colors(self):
         self.color[1], self.color[2] = self.color[2], self.color[1]
         self.victory[1], self.victory[2] = self.victory[2], self.victory[1]
-
+"""
 
 class HexBoard:
     """
@@ -511,16 +538,16 @@ class HexBoard:
 
 class Game:
 
-    def __init__(self, m, n, mode, color_theme):
+    def __init__(self, m, n, mode, color_theme, name1=1, name2=2):
         # bei human soll ein Spielfeld erstellt werden
         # und eine GUI gestartet
         self.board = HexBoard(m, n)     # Spielbrett
         self.cur_player = self.chooseFirst()
-        self.cur_player = 2  # !!! TESTING
         print("Random first: {}".format(self.cur_player))
         self.round = 0
-        self.gui = HexGui(m, n, self, color_theme)   # GUI
+        self.gui = HexGui(m, n, self, color_theme, name1, name2)
         self.mode = mode
+        self.was_switched = False
         self.machine, self.machines = None, {}
 
         if mode == "inter":
@@ -569,6 +596,8 @@ class Game:
 
             if self.gui.swap_was_made:
                 self.gui.swap_was_made = False  # can only swap once
+                # remember that we swapped in the beginning
+                self.was_switched = True
                 self.swap()
             print("cur_player: {}".format(self.cur_player))
 
@@ -610,6 +639,9 @@ class Game:
             elif self.mode == "ki":
                 machines[self.cur_player].calculateMove()
                 self.makeMove(machines[self.cur_player].nextMove())
+
+            if not self.board.finished():
+                self.gui.update_label()
 
     def is_machine_turn(self, machine):
         if machine:
@@ -660,7 +692,9 @@ if __name__ == "__main__":
             n, m = int(dim.split(" ")[0]), int(dim.split(" ")[1])
             if n < 2 or m < 2:
                 print("Die Dimensionen sind zu klein")
-        hex_game = Game(n, m, mode, theme)
+        name1 = input("Name of first player: ")
+        name2 = input("Name of second player: ")
+        hex_game = Game(n, m, mode, theme, name1, name2)
 
     # Additional test mode to have a predefined game played automatically
     elif mode == "test":
