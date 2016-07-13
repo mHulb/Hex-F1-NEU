@@ -41,13 +41,14 @@ class HexKI_R(object):
         """
         """
         # Wechseln wenn von oben nach unten
-        return 1 # nicht wechseln
+        return 2 # nicht wechseln
 
 
 
     def calculateMove(self):
         """
         """
+        self.best_move = self.__random_move()
         # if self.move_number == 0:
         #     self.first_player = True
         #
@@ -87,13 +88,18 @@ class HexKI_R(object):
 
         # liegt am Rand
         else:
-            i = 0
-            mo = self.last_move
-            while True:
-                if self.board[i][mo[1]]==0:
-                    return (i,self.n-1)
-                else:
-                    i+= 1
+            return self.random_move_in_outside()
+
+    def random_move_in_outside(self):
+        mo = self.last_move
+        diff = self.n - self.m
+
+        while True:
+            i = random.randint(0, diff)
+            j = random.randint(0, self.m - 1)
+            if self.board[j][self.m -1 + i] == 0:
+                return (j,self.m -1 + i)
+
 
     def nextMove(self):
         """
@@ -108,7 +114,7 @@ class HexKI_R(object):
         return self.best_move
 
 
-    def receiveMove(self, move):
+    def receiveMove(self, move, current_player = None):
         """
         """
         self.board[move[0]][move[1]] = 2
@@ -138,6 +144,10 @@ class HexKI_R(object):
         """
         self.player_colour = player
         self.opponent_colour = opponent
+
+    def swapColours(self):
+        self.player_colour, self.opponent_colour = \
+        self.opponent_colour, self.player_colour
 
     def __make_edges(self):
         edges = []
@@ -196,15 +206,3 @@ class HexKI_R(object):
             right_bound.neighbours.append(row[self.m - 1])
 
 
-A = HexKI_R(4,6)
-            # n m
-A.receiveMove((0,0))
-A.calculateMove()
-A.nextMove()
-
-
-A.receiveMove((1,5))
-A.calculateMove()
-A.nextMove()
-
-#print(' \n'.join(' '.join(str(el) for el in row ) for row in A.board ))
