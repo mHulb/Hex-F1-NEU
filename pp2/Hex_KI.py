@@ -252,11 +252,15 @@ class HexKI:
         # Sortiere Moves nach a wert, so dass er mit dem kleinsten a
         # beginnt (kleines a -> guter move)
         for val in sorted(self.moves):
-            if val == 0 and len(self.moves[val]) > 1:
+            if val == 0:
+                self.depth = 1
+            elif val == 0 and len(self.moves[val]) > 1:
                 moves = [self.moves[val]]
                 val = 0  # as integer
+                self.depth = 1
             else:
                 moves = self.moves
+
 
             for i, j in moves[val]:
                 if nodes[i][j].colour == 0:
