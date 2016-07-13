@@ -48,17 +48,18 @@ class HexKI_R(object):
     def calculateMove(self):
         """
         """
-        if self.move_number == 0:
-            self.first_player = True
+        # if self.move_number == 0:
+        #     self.first_player = True
+        #
+        # if self.first_player:
+        #     self.best_move = self.__random_move()
+        #     return True
+        # else:
 
-        if self.first_player:
-            self.best_move = self.__random_move()
-            return True
-        else:
-            i,j = self.last_move
+        i,j = self.last_move
 
-            if j < self.n:
-                self.best_move = self.oposit_move((i,j))
+        if j < self.n:
+            self.best_move = self.oposit_move((i,j))
 
         return True
 

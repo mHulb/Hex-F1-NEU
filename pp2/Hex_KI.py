@@ -11,6 +11,7 @@ class HexKI:
     def __init__(self, m, n):
         """
         """
+        self.depth = 2
         self.m = m  # number of rows
         self.n = n  # number of columns
         self.move_number = 1
@@ -33,6 +34,7 @@ class HexKI:
         self.eval_number = 0
         self.eval_times = []
         self.board_scores = {}
+        self.eval_time_average = 0
 
     def __make_edges(self):
         edges = []
@@ -92,8 +94,12 @@ class HexKI:
     def chooseOrder(self, firstmove):
         """
         """
+        self.move_number += 1
         if self.n == 1:
-            return 1
+            if firstmove(0,1):
+                return 1
+            else:
+                return 2
         elif self.n == 2:
             if firstmove == (1,0):
                 return 1
@@ -138,10 +144,22 @@ class HexKI:
 
         # Nachfolgende ist zum Speichern der besten moves gedacht
         # Wenn man mit besseren moves anfängt, spart man sich angeblich zeit
-        if self.n == 3 and self.move_number == 1:
+        if self.n == 2:
+            if self.move_number == 1:
+                self.best_move = (1,0)
+                self.move_number += 1
+                return True
+            else:
+                self.moves = {}
+                (self.moves.setdefault(1, [])).append((1, 0))
+                (self.moves.setdefault(1, [])).append((1, 1))
+
+
+        elif self.n == 3 and self.move_number == 1:
             self.moves = {}
             self.best_move = (1,1)
             self.move_number += 1
+            self.depth -= 1
             return True
 
         elif self.n == 4:
@@ -222,7 +240,8 @@ class HexKI:
                 print(self.moves)
 
             # Beim zweiten move werden alle fehlenden moves hinzugefuegt
-            elif self.move_number == 2:
+            else:
+                self.moves = {}
                 for i in range(self.n):
                     for j in range(self.m):
                         if i not in range(1, self.n - 1) or j not in range(1, self.m - 1):
@@ -246,7 +265,7 @@ class HexKI:
                     # Daher tmporere nodes
                     nodes[i][j].change_colour(self.player_colour)
                     # theoretisch muesste hier min_value aufgerufen werden
-                    a = self.min_value(nodes, float("inf"), -float("inf"), 2)
+                    a = self.min_value(nodes, float("inf"), -float("inf"), self.depth)
                     # wieder zurueck setzten, damit es beim naechsten move
                     # nicht stoert
                     nodes[i][j].change_colour(0)
