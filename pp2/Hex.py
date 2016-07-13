@@ -546,7 +546,7 @@ class Game:
         # und eine GUI gestartet
         self.board = HexBoard(m, n)     # Spielbrett
         self.cur_player = self.chooseFirst()
-        self.cur_player = 2 # !!! TESTING
+        self.cur_player = 1     # !!! TESTING
         print("Random first: {}".format(self.cur_player))
         self.round = 0
         self.gui = HexGui(m, n, self, color_theme, name1, name2)
