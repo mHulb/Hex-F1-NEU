@@ -11,7 +11,7 @@ class HexKI:
     def __init__(self, m, n):
         """
         """
-        self.depth = 2
+        self.depth = 3
         self.m = m  # number of rows
         self.n = n  # number of columns
         self.move_number = 1
@@ -245,7 +245,6 @@ class HexKI:
                         (self.moves.setdefault(1, [])).append((i, j))
 
                 self.move_number += 1
-                print(self.moves)
 
             # Beim zweiten move werden alle fehlenden moves hinzugefuegt
             else:
@@ -256,7 +255,6 @@ class HexKI:
                             j not in range(1, self.m - 1)):
                             (self.moves.setdefault(1, [])).append((i, j))
                 self.move_number += 1
-                print(self.moves)
 
         # Sortiere Moves nach a wert, so dass er mit dem kleinsten a
         # beginnt (kleines a -> guter move)
@@ -310,7 +308,6 @@ class HexKI:
 
         value = self.board_scores.get(key)
         if value:
-            # print(value)
             self.eval_times.append(time.clock() - t0)
             return value
 
@@ -327,9 +324,6 @@ class HexKI:
         end_node = self.boundaries[self.opponent_colour][1]
         board_eval_2 = Dijkstra(nodes, start_node, end_node)
         value_2 = board_eval_2.value
-        """
-        if value_1 == 0:
-            return 0 """
 
         # edge case division by zero
         self.eval_times.append(time.clock() - t0)

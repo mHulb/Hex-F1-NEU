@@ -594,7 +594,6 @@ class Game:
 
             if self.mode == "inter":
                 self.machine.receiveMove(move, self.currentPlayer())
-                print("machine received move!")
             elif self.mode == "ki":
                 self.machines[1].receiveMove(move, self.currentPlayer())
                 self.machines[2].receiveMove(move, self.currentPlayer())
@@ -606,9 +605,6 @@ class Game:
             self.changePlayer()         # anderer Spieler am Zug
             self.gui.master.update()    # used to update gui in test mode
             print("current player is: {}".format(self.currentPlayer()))
-            # self.gui.update_label()
-            print("sleeping...")
-            # sleep(1)
 
             if self.board.finished():
                 print("Player {} has won!".format(self.board.winner()))
@@ -621,7 +617,6 @@ class Game:
 
             elif self.mode == "inter" and self.is_machine_turn(self.machine):
                 t0 = clock()
-                print("Calculating machine move...HERE!!!")
                 self.machine.calculateMove()
                 calculated_move = self.machine.nextMove()
                 print(
