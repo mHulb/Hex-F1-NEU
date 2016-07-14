@@ -544,8 +544,9 @@ class Game:
         if mode == "inter":
             if not self.n == self.m:
                 self.machine = HexKI_R(m, n)
-                human_colour = random([1, 2])
-                machine_colour = [1, 2].remove(human_colour)[0]
+                colours = [1, 2]
+                random.shuffle(colours)
+                human_colour, machine_colour = colours
                 self.machine.setColours(machine_colour, human_colour)
             else:
                 self.machine = HexKI(m, n)
