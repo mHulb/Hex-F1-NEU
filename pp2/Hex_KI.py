@@ -26,6 +26,7 @@ class HexKI:
 
         self.__initialize_nodes(m, n)
         self.edges = self.__make_edges()
+        self.virtual_connections = {}
         self.best_move = None
         self.player_colour = None
         self.opponent_colour = None
@@ -35,6 +36,7 @@ class HexKI:
         self.eval_times = []
         self.board_scores = {}
         self.eval_time_average = 0
+        self.winning_move = None
 
     def __make_edges(self):
         edges = []
@@ -293,6 +295,7 @@ class HexKI:
         if self.eval_times:
             self.eval_time_average = sum(self.eval_times
                                          ) / len(self.eval_times)
+        print(self.moves)
         return True
 
     def evaluate(self, nodes=None):
@@ -302,7 +305,7 @@ class HexKI:
         """
         if not nodes:
             nodes = self.nodes
-
+        """
         key = "".join(["".join(
             [str(n.colour) for n in row]) for row in nodes])
 
@@ -310,7 +313,7 @@ class HexKI:
         if value:
             self.eval_times.append(time.clock() - t0)
             return value
-
+        """
         self.eval_number += 1
         # if not edges:
         #    edges = self.edges
@@ -332,7 +335,7 @@ class HexKI:
         else:
             value = value_1 / value_2
 
-        self.board_scores[key] = value
+        # self.board_scores[key] = value
         return value
 
     def setColours(self, player, opponent):
@@ -367,6 +370,8 @@ class HexKI:
         print("AI BOARD")
         print(self)
 
+        self.make_virtual_connection(self.nodes[i][j])
+
     def readBoard(self, board, current=True):
         """
         """
@@ -383,7 +388,6 @@ class HexKI:
                 return (i, j)
 
     def max_value(self, nodes, a, b, depth):
-
         if (depth == 0):
             return self.evaluate(nodes)
         # moves = [(i, j) for i in range(self.n) for j in range(self.m)]
@@ -392,13 +396,9 @@ class HexKI:
             for i, j in self.moves[val]:
                 if nodes[i][j].colour == 0:
                     nodes[i][j].change_colour(self.player_colour)
-
                     a = min(a, self.min_value(nodes, a, b, depth - 1))
-
                     nodes[i][j].change_colour(0)
-                    # nodes[i][j].pot = 1
-
-            # this ia a cutoff point
+                # this ia a cutoff point
                 if a <= b:
                     return a
         return a
@@ -412,11 +412,8 @@ class HexKI:
             for i, j in self.moves[val]:
                 if nodes[i][j].colour == 0:
                     nodes[i][j].change_colour(self.opponent_colour)
-
                     b = max(b, self.max_value(nodes, a, b, depth - 1))
                     nodes[i][j].change_colour(0)
-                    # nodes[i][j].pot = 1
-
                 # this is a cutoff point
                 if b >= a:
                     return b
@@ -429,3 +426,29 @@ class HexKI:
         for i, row in enumerate(colours):
             output += i * "   " + "   ".join(row) + "\n"
         return output
+
+    def make_virtual_connection(self, node):
+        """
+        Checks virtual connections of a node.
+        """
+        print("virtual connection for {}".format(node))
+        num_neighbours = {}
+        for n in node.neighbours:
+            for nn in n.neighbours:
+                num_neighbours[nn] = 0
+
+        for neighbour in node.neighbours:
+            if neighbour.colour == 0:
+                print("checking neighbour {}".format(neighbour))
+                for other_node in neighbour.neighbours:
+                    print("checking other_node {}".format(neighbour))
+                    if not other_node == node:
+                        if (other_node.colour == node.colour and not 
+                                                 other_node.i == None):
+                            print("other_node {}".format(other_node))
+                            num_neighbours[other_node] += 1
+                            if num_neighbours[other_node] == 2:
+                                print("!!! Virtual connection to {}".format(
+                                    other_node))
+
+        print(num_neighbours)

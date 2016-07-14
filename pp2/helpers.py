@@ -132,7 +132,6 @@ class AINode(Node):
         else:   # if self.colour == 2
             self.resistance_1, self.resistance_2 = float("inf"), 0
 
-
     def __str__(self):
         return "|({}, {}) {}|".format(self.i, self.j, super().__str__())
 
@@ -150,6 +149,7 @@ class Edge():
     Class for an edge.
     Connects nodes a and b and saves a resistance value for each player.
     """
+
     def __init__(self, v, w):
         self.v = v
         self.w = w
